@@ -51,12 +51,26 @@ server.post('/zoos', function(req, res) {
     });
 });
 
-// server.delete('/zoos:id', (req, res) => {
-//   knex('zoos')
-//     .where({ id: 'id' })
-//     .select('id')
-//     .del();
-// });
+server.delete('/zoos/:id', function(req, res) {
+  const { id } = req.params;
+  knex('zoos')
+    .where({ id })
+    .then(function(zoo) {
+      if (zoo.length) {
+        knex('zoos')
+          .where({ id })
+          .del()
+          .then(function(success) {
+            res.status(200).json({ msg: `Zoo with id: ${id} deleted` });
+          })
+          .catch(function(fail) {
+            res.status(500).json({ error: `Zoo with id: ${id} not deleted` });
+          });
+      } else {
+        res.status(404).json({ msg: `Zoo with id: ${id} not found` });
+      }
+    });
+});
 
 server.get('/bears', function(req, res) {
   knex('bears')
@@ -85,7 +99,7 @@ server.get('/bears/:id', function(req, res) {
 });
 
 server.post('/bears', function(req, res) {
-  const bear = req.body;
+  const bear = ({ zooId, species, latinName } = req.body);
   knex
     .insert(bear)
     .into('bears')
